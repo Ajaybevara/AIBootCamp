@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Bootcamp Registration</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: black;
+  color: white;
+  overflow: hidden;
+}
+
+canvas {
+  position: fixed;
+  z-index: -1;
+}
+
+/* FORM */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.form-box {
+  background: rgba(255,255,255,0.08);
+  padding: 30px;
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 40px rgba(0,0,0,0.7);
+}
+
+h2 {
+  text-align: center;
+  color: gold;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 8px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 30px;
+  border: none;
+  background: gold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+/* QR */
+#qrBox {
+  display: none;
+  text-align: center;
+}
+
+/* WhatsApp */
+#whatsapp-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: #25D366;
+  padding: 15px;
+  border-radius: 50%;
+  color: white;
+  text-decoration: none;
+}
+
+/* Chatbot */
+#chatbot-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: gold;
+  padding: 15px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#chatbot-box {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 280px;
+  height: 350px;
+  background: #111;
+  display: none;
+  flex-direction: column;
+}
+
+#chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+#userInput {
+  padding: 10px;
+  border: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<div class="form-box">
+
+<h2>🚀 AI Bootcamp</h2>
+
+<input id="name" placeholder="Full Name">
+<input id="age" placeholder="Age">
+<input id="education" placeholder="Education">
+<input id="phone" placeholder="Phone">
+<input id="email" placeholder="Email">
+
+<h3>💳 Secure Payment</h3>
+
+<button onclick="handlePayment()">📲 Pay Now</button>
+
+<!-- QR for Desktop -->
+<div id="qrBox">
+  <p>Scan & Pay</p>
+  <img src="qr.png" width="180">
+</div>
+
+<input id="utr" placeholder="Enter UTR / Transaction ID">
+<input type="file" id="screenshot">
+
+<button onclick="submitForm()">✅ Submit</button>
+
+<p style="color:red;">
+⚠️ Complete payment → Enter UTR → Upload screenshot
+</p>
+
+</div>
+</div>
+
+<!-- WhatsApp -->
+<a href="https://wa.me/919704761116" target="_blank" id="whatsapp-btn">💬</a>
+
+<!-- Chatbot -->
+<div id="chatbot-btn">🤖</div>
+
+<div id="chatbot-box">
+  <div id="chat-body"></div>
+  <input id="userInput" placeholder="Ask...">
+</div>
+
+<script>
+
+/* 3D BACKGROUND */
+let scene=new THREE.Scene();
+let camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+let renderer=new THREE.WebGLRenderer({alpha:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+let mesh=new THREE.Mesh(
+new THREE.TorusKnotGeometry(10,3,100,16),
+new THREE.MeshBasicMaterial({color:0x00ffff,wireframe:true})
+);
+
+scene.add(mesh);
+camera.position.z=30;
+
+function animate(){
+requestAnimationFrame(animate);
+mesh.rotation.x+=0.01;
+mesh.rotation.y+=0.01;
+renderer.render(scene,camera);
+}
+animate();
+
+/* DEVICE DETECTION */
+function isMobile(){
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+/* PAYMENT */
+let paymentDone=false;
+
+function handlePayment(){
+  paymentDone = true;
+
+  let upiURL = "upi://pay?pa=7793966921@upi&pn=AI Bootcamp&am=500&cu=INR";
+
+  if(isMobile()){
+    window.location.href = upiURL;
+  } else {
+    document.getElementById("qrBox").style.display = "block";
+    alert("Scan QR using PhonePe / Google Pay");
+  }
+}
+
+/* SUBMIT */
+function submitForm(){
+
+let utr=document.getElementById("utr").value;
+let file=document.getElementById("screenshot").files[0];
+
+if(!paymentDone){
+alert("Click Pay First");
+return;
+}
+
+if(utr===""){
+alert("Enter UTR ID");
+return;
+}
+
+if(!file){
+alert("Upload Screenshot");
+return;
+}
+
+let reader=new FileReader();
+
+reader.onload=function(){
+let base64=reader.result.split(',')[1];
+
+fetch("https://script.google.com/macros/s/AKfycbwm_PkGRI_3QNFKEXlNMKVhxfVGMrstg92FpW41lzqFfytUgZLS4OVFXd_lnDoX7tcr/exec",{
+method:"POST",
+body:JSON.stringify({
+name:name.value,
+age:age.value,
+education:education.value,
+phone:phone.value,
+email:email.value,
+payment_id:utr,
+screenshot:base64
+})
+});
+
+localStorage.setItem("payment_id",utr);
+window.location.href="success.html";
+
+};
+
+reader.readAsDataURL(file);
+
+}
+
+/* CHATBOT */
+document.getElementById("chatbot-btn").onclick=()=>{
+let box=document.getElementById("chatbot-box");
+box.style.display=box.style.display==="flex"?"none":"flex";
+};
+
+document.getElementById("userInput").addEventListener("keypress",function(e){
+if(e.key==="Enter"){
+let input=this.value.toLowerCase();
+let reply="Contact WhatsApp for help";
+
+if(input.includes("price")) reply="Fee is ₹500";
+if(input.includes("duration")) reply="4 weekends program";
+if(input.includes("register")) reply="Click Pay Now and submit form";
+if(input.includes("learn")) reply="AI tools, chatbot, projects";
+
+document.getElementById("chat-body").innerHTML += "<p>👤 "+input+"</p><p>🤖 "+reply+"</p>";
+this.value="";
+}
+});
+
+</script>
+
+</body>
+</html>
